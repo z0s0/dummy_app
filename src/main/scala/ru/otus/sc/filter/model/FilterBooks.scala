@@ -2,6 +2,18 @@ package ru.otus.sc.filter.model
 
 import ru.otus.sc.book.model.Book
 
-case class FilterBooksRequest(a: Int)
+import ru.otus.sc.author.model.Genre
+
+sealed trait BooksFilter
+
+case object BooksFilter {
+  case class ByName(name: String)         extends BooksFilter
+  case class ByGenre(genre: Genre)        extends BooksFilter
+  case class MinPagesCount(count: Int)    extends BooksFilter
+  case class MaxPagesCount(maxCount: Int) extends BooksFilter
+  case object WithSignificantAuthors      extends BooksFilter
+}
+
+case class FilterBooksRequest(filters: List[BooksFilter])
 
 case class FilterBooksResponse(books: Seq[Book])

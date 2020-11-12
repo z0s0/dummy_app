@@ -43,7 +43,7 @@ class BookServiceImpl(dao: BookDao, implicit val ThreadPool: ExecutionContext) e
     }
   }
 
-  override def listBooks: Future[ListBooksResponse] = Future(ListBooksResponse(dao.listBooks))
+  override def listBooks: Future[ListBooksResponse] = dao.listBooks.map(ListBooksResponse)
 
   override def updateBook(request: UpdateBookRequest): Future[UpdateBookResponse] = {
     request.book.id match {

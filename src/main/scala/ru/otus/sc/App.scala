@@ -96,7 +96,7 @@ object App {
     val authorDao                                     = new AuthorDaoMapImpl()
     val authorService                                 = new AuthorServiceImpl(authorDao, ThreadPool)
     val filterService =
-      new FilterServiceImpl(authorService = authorService, bookService = bookService)
+      new FilterServiceImpl(authorService = authorService, bookService = bookService, ThreadPool)
 
     new AppImpl(bookService, authorService, filterService)
   }
