@@ -17,7 +17,7 @@ class AuthorDaoMapImpl extends AuthorDao {
 
   override def createAuthor(author: Author): Future[Option[Author]] =
     Future {
-      val id           = UUID.randomUUID()
+      val id           = author.id.getOrElse(UUID.randomUUID())
       val authorWithID = author.copy(id = Some(id))
 
       if (isAuthorValid(authorWithID)) {

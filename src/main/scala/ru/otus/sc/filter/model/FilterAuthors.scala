@@ -10,6 +10,6 @@ object AuthorsFilter {
   case class ByPublicationYear(year: Int) extends AuthorsFilter
 }
 
-case class FilterAuthorsRequest(filters: List[AuthorsFilter])
+case class FilterAuthorsRequest(filters: Option[Seq[AuthorsFilter]], limit: Option[Int])
 
 case class FilterAuthorsResponse(authors: Seq[Author])

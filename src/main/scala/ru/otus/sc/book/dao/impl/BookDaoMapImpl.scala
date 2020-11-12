@@ -31,7 +31,7 @@ class BookDaoMapImpl extends BookDao {
   override def createBook(book: Book): Future[Option[Book]] =
     Future {
       if (isValidBook(book)) {
-        val id         = UUID.randomUUID()
+        val id         = book.id.getOrElse(UUID.randomUUID())
         val bookWithID = book.copy(id = Some(id))
         books += (id -> bookWithID)
         Some(bookWithID)
