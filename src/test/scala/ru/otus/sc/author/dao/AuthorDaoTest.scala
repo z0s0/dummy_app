@@ -2,18 +2,16 @@ package ru.otus.sc.author.dao
 
 import java.util.UUID
 
+import ru.otus.sc.author.model.Author
+import ru.otus.sc.support.Generators._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
-import ru.otus.sc.author.model.{Author, Genre}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import org.scalacheck.{Arbitrary, Gen}
-import org.scalacheck.Prop.propBoolean
-import Arbitrary.arbitrary
 import org.scalatest.concurrent.ScalaFutures
 
-import scala.util.Random
 import scala.concurrent.duration._
 
 abstract class AuthorDaoTest(
@@ -22,21 +20,6 @@ abstract class AuthorDaoTest(
 ) extends AnyFreeSpec
     with ScalaCheckDrivenPropertyChecks
     with ScalaFutures {
-
-  implicit lazy val genGenre: Gen[Genre]             = Gen.oneOf(Genre.Horror, Genre.Programming, Genre.NoGenre)
-  implicit lazy val arbitraryGenre: Arbitrary[Genre] = Arbitrary(genGenre)
-
-  implicit lazy val genAuthor: Gen[Author] = for {
-    id    <- Gen.uuid
-    name  <- arbitrary[String]
-    genre <- arbitrary[Genre]
-  } yield Author(
-    id = Some(id),
-    name = name,
-    genres = Set(genre)
-  )
-
-  implicit lazy val arbitraryAuthor: Arbitrary[Author] = Arbitrary(genAuthor)
 
   "listAuthors" - {
     "when no authors present" in {

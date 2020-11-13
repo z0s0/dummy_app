@@ -22,7 +22,7 @@ import ru.otus.sc.author.model.{
   UpdateAuthorResponse
 }
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.Future
 
 class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures {
 
@@ -114,18 +114,11 @@ class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutur
   }
 
   "deleteAuthor" - {
-    "when id is provided but author is unknown" - {
-      val dao     = mock[AuthorDao]
-      val srv     = new AuthorServiceImpl(dao)
-      val request = DeleteAuthorRequest(None)
-
-      srv.deleteAuthor(request).futureValue shouldBe DeleteAuthorResponse.CannotDeleteWithoutID
-    }
     "when author is unknown" - {
       val id      = UUID.randomUUID()
       val dao     = mock[AuthorDao]
       val srv     = new AuthorServiceImpl(dao)
-      val request = DeleteAuthorRequest(Some(id))
+      val request = DeleteAuthorRequest(id)
 
       (dao.deleteAuthor _).expects(id).returns(Future.successful(None))
 
@@ -135,7 +128,7 @@ class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutur
       val id      = UUID.randomUUID()
       val dao     = mock[AuthorDao]
       val srv     = new AuthorServiceImpl(dao)
-      val request = DeleteAuthorRequest(Some(id))
+      val request = DeleteAuthorRequest(id)
 
       (dao.deleteAuthor _).expects(id).returns(Future.successful(Some(author1)))
       srv.deleteAuthor(request).futureValue shouldBe DeleteAuthorResponse.Deleted(author1)

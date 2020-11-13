@@ -45,14 +45,9 @@ class AuthorServiceImpl(dao: AuthorDao)(implicit val ThreadPool: ExecutionContex
     }
   }
 
-  override def deleteAuthor(request: DeleteAuthorRequest): Future[DeleteAuthorResponse] = {
-    request.id match {
-      case Some(id) =>
-        dao.deleteAuthor(id).map {
-          case Some(deletedAuthor) => DeleteAuthorResponse.Deleted(deletedAuthor)
-          case None                => DeleteAuthorResponse.NotFound
-        }
-      case None => Future.successful(DeleteAuthorResponse.CannotDeleteWithoutID)
+  override def deleteAuthor(request: DeleteAuthorRequest): Future[DeleteAuthorResponse] =
+    dao.deleteAuthor(request.id).map {
+      case Some(deletedAuthor) => DeleteAuthorResponse.Deleted(deletedAuthor)
+      case None                => DeleteAuthorResponse.NotFound
     }
-  }
 }

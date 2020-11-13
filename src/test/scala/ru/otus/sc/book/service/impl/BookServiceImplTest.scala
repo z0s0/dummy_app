@@ -120,7 +120,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
       val dao = mock[BookDao]
       val srv = new BookServiceImpl(dao)
 
-      val request = DeleteBookRequest(book1.id)
+      val request = DeleteBookRequest(book1.id.get)
 
       (dao.deleteBook _).expects(book1.id.get).returns(Future.successful(Some(book1)))
       srv.deleteBook(request).futureValue shouldBe DeleteBookResponse.Deleted(book1)
@@ -130,7 +130,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
       val dao = mock[BookDao]
       val srv = new BookServiceImpl(dao)
 
-      val request = DeleteBookRequest(book1.id)
+      val request = DeleteBookRequest(book1.id.get)
 
       (dao.deleteBook _).expects(book1.id.get).returns(Future.successful(None))
       srv.deleteBook(request).futureValue shouldBe (DeleteBookResponse.NotFound)

@@ -33,13 +33,9 @@ class BookServiceImpl(dao: BookDao)(implicit val ThreadPool: ExecutionContext) e
   }
 
   override def deleteBook(request: DeleteBookRequest): Future[DeleteBookResponse] = {
-    request.id match {
-      case Some(id) =>
-        dao.deleteBook(id).map {
-          case Some(deletedBook) => DeleteBookResponse.Deleted(deletedBook)
-          case None              => DeleteBookResponse.NotFound
-        }
-      case None => Future.successful(DeleteBookResponse.CannotDeleteWithoutID)
+    dao.deleteBook(request.id).map {
+      case Some(deletedBook) => DeleteBookResponse.Deleted(deletedBook)
+      case None              => DeleteBookResponse.NotFound
     }
   }
 
