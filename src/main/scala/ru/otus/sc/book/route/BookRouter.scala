@@ -21,7 +21,7 @@ import ru.otus.sc.book.model.{
 class BookRouter(bookService: BookService) {
   def route: Route =
     pathPrefix("books") {
-      listBooks ~ getBook ~ createBook ~ deleteBook ~ updateBook
+      getBook ~ listBooks ~ createBook ~ deleteBook ~ updateBook
     }
 
   private def getBook: Route =

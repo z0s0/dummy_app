@@ -71,18 +71,18 @@ class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutur
       val dao = mock[AuthorDao]
       val srv = new AuthorServiceImpl(dao)
 
-      (dao.listAuthors _).expects().returns(Future.successful(Seq[Author]()))
+      (dao.listAuthors _).expects().returns(Future.successful(Vector[Author]()))
 
-      srv.listAuthors.futureValue shouldBe ListAuthorsResponse(Seq[Author]())
+      srv.listAuthors.futureValue shouldBe ListAuthorsResponse(Vector[Author]())
     }
 
     "when db is not empty returns list of authors" - {
       val dao = mock[AuthorDao]
       val srv = new AuthorServiceImpl(dao)
 
-      (dao.listAuthors _).expects().returns(Future.successful(Seq[Author](author1)))
+      (dao.listAuthors _).expects().returns(Future.successful(Vector[Author](author1)))
 
-      srv.listAuthors.futureValue shouldBe ListAuthorsResponse(Seq[Author](author1))
+      srv.listAuthors.futureValue shouldBe ListAuthorsResponse(Vector[Author](author1))
     }
   }
 
@@ -102,14 +102,6 @@ class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutur
 
       (dao.updateAuthor _).expects(author1).returns(Future.successful(None))
       srv.updateAuthor(request).futureValue shouldBe UpdateAuthorResponse.Invalid
-    }
-    "when id is not provided" - {
-      val dao             = mock[AuthorDao]
-      val srv             = new AuthorServiceImpl(dao)
-      val authorWithoutID = author1.copy(id = None)
-      val request         = UpdateAuthorRequest(authorWithoutID)
-
-      srv.updateAuthor(request).futureValue shouldBe UpdateAuthorResponse.CannotUpdateWithoutID
     }
   }
 

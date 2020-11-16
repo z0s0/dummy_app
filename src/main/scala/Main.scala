@@ -1,36 +1,31 @@
 import java.util.UUID
 
+import cats.implicits._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
-import ru.otus.sc.App
-import ru.otus.sc.author.dao.impl.AuthorDaoMapImpl
+import akka.http.scaladsl.server.Route
+import ru.otus.sc.author.dao.impl.AuthorDaoDoobieImpl
 import ru.otus.sc.author.service.impl.AuthorServiceImpl
 import ru.otus.sc.ThreadPool.CustomThreadPool
-import ru.otus.sc.author.model.{Author, Genre}
 import ru.otus.sc.author.route.AuthorRouter
-import ru.otus.sc.book.dao.impl.BookDaoMapImpl
+import ru.otus.sc.book.dao.impl.{BookDaoDoobieImpl, BookDaoMapImpl}
 import ru.otus.sc.book.route.BookRouter
 import ru.otus.sc.book.service.impl.BookServiceImpl
+import cats.effect.{Blocker, ContextShift, IO, Resource}
+import doobie.hikari.HikariTransactor
+import doobie.util.ExecutionContexts
+import doobie.util.transactor.Transactor
+import ru.otus.sc.Config
+import ru.otus.sc.db.Migrations
 
+import scala.concurrent.ExecutionContextExecutor
 import scala.io.StdIn
 
 object Main {
-  def main(args: Array[String]): Unit = {
-    implicit val system = ActorSystem("sys")
-
-    import system.dispatcher
-
-    val bookDao   = new BookDaoMapImpl
-    val authorDao = new AuthorDaoMapImpl
-
-    authorDao.createAuthor(
-      Author(
-        id = Some(UUID.randomUUID()),
-        name = "ARmen",
-        genres = Set(Genre.Programming)
-      )
-    )
+  def createRoute(tr: Transactor[IO])(implicit ec: ExecutionContextExecutor): Route = {
+    val authorDao = new AuthorDaoDoobieImpl(tr)
+    val bookDao   = new BookDaoDoobieImpl(tr)
 
     val authorService = new AuthorServiceImpl(authorDao, CustomThreadPool)
     val bookService   = new BookServiceImpl(bookDao, CustomThreadPool)
@@ -38,12 +33,56 @@ object Main {
     val authorRouter = new AuthorRouter(authorService)
     val bookRouter   = new BookRouter(bookService)
 
-    val rootRouter = authorRouter.route ~ bookRouter.route
+    authorRouter.route ~ bookRouter.route
+  }
 
-    Http().newServerAt("localhost", 5000).bind(rootRouter)
+  def main(args: Array[String]): Unit = {
+    implicit val sc: ContextShift[IO] = IO.contextShift(ExecutionContexts.synchronous)
 
-    StdIn.readLine()
+    def makeBinding(tr: Transactor[IO])(implicit system: ActorSystem) = {
+      Resource.make(
+        IO.fromFuture(
+          IO(
+            Http()(system)
+              .newServerAt("localhost", 5000)
+              .bind(createRoute(tr))
+          )
+        )
+      )(b => IO.fromFuture(IO(b.unbind())).map(_ => ()))
+    }
+    val config = Config.default
 
-    system.terminate()
+    val binding =
+      for {
+        ce <- ExecutionContexts.fixedThreadPool[IO](32)
+        be <- Blocker[IO]
+        xa <- HikariTransactor.newHikariTransactor[IO](
+          "org.postgresql.Driver",
+          config.dbUrl,
+          config.dbUser,
+          config.dbPassword,
+          ce,
+          be
+        )
+
+        system <- Resource.make(IO(ActorSystem("system")))(s =>
+          IO.fromFuture(IO(s.terminate())).map(_ => ())
+        )
+
+        binding <- makeBinding(xa)(system)
+      } yield binding
+
+    val app =
+      binding
+        .use { _ =>
+          for {
+            _ <- IO(println(s"Binding on localhost:5000"))
+            _ <- IO(StdIn.readLine())
+          } yield ()
+        }
+
+    val init = IO(new Migrations(config).applyMigrationsSync())
+
+    app.unsafeRunSync()
   }
 }

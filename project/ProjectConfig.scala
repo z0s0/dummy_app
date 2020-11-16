@@ -16,6 +16,20 @@ object ProjectConfig {
     val scalamock         = "5.0.0"
 
     val `scalacheck-shapeless_1.14` = "1.2.3"
+
+    val doobie = "0.9.0"
+
+    val slick = "3.3.2"
+
+    val postgresql = "42.2.15"
+
+    val `flyway-core` = "6.5.5"
+
+    val logback = "1.2.3"
+
+    val slf4j = "1.7.30"
+
+    val testcontainers = "0.38.1"
   }
 
   val testDependencies = Seq(
@@ -34,10 +48,42 @@ object ProjectConfig {
     "com.typesafe.akka" %% "akka-http-testkit"   % versions.`akka-http`
   )
 
+  val doobieDependencies = Seq(
+    "org.tpolecat" %% "doobie-core"      % versions.doobie,
+    "org.tpolecat" %% "doobie-hikari"    % versions.doobie,
+    "org.tpolecat" %% "doobie-quill"     % versions.doobie,
+    "org.tpolecat" %% "doobie-postgres"  % versions.doobie,
+    "org.tpolecat" %% "doobie-scalatest" % versions.doobie % Test
+  )
+
+  val slickDependencies = Seq(
+    "com.typesafe.slick" %% "slick"          % versions.slick,
+    "com.typesafe.slick" %% "slick-hikaricp" % versions.slick
+  )
+
+  val dbDependencies = Seq(
+    "org.postgresql" % "postgresql"                      % versions.postgresql,
+    "org.flywaydb"   % "flyway-core"                     % versions.`flyway-core`,
+    "com.dimafeng"  %% "testcontainers-scala-scalatest"  % versions.testcontainers % Test,
+    "com.dimafeng"  %% "testcontainers-scala-postgresql" % versions.testcontainers % Test
+  )
+
+  val logDependencies = Seq(
+    "ch.qos.logback" % "logback-classic" % versions.logback,
+    "org.slf4j"      % "slf4j-api"       % versions.slf4j
+  )
+
   val playJsonDependencies = Seq(
     "de.heikoseeberger" %% "akka-http-play-json" % versions.`akka-http-play-json`,
     "com.typesafe.play" %% "play-json"           % versions.`play-json`
   )
 
-  val projectDependencies = testDependencies ++ akkaDependencies ++ playJsonDependencies
+  val projectDependencies =
+    testDependencies ++
+      akkaDependencies ++
+      playJsonDependencies ++
+      doobieDependencies ++
+      slickDependencies ++
+      logDependencies ++
+      dbDependencies
 }

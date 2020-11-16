@@ -5,7 +5,6 @@ sealed trait UpdateAuthorResponse
 case object UpdateAuthorResponse {
   case class Updated(author: Author) extends UpdateAuthorResponse
   case object Invalid                extends UpdateAuthorResponse
-  case object CannotUpdateWithoutID  extends UpdateAuthorResponse
 }
 
 case class UpdateAuthorRequest(author: Author)

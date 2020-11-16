@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class AuthorDaoMapImpl(implicit val ThreadPool: ExecutionContext) extends AuthorDao {
   private var authors = Map[UUID, Author]()
 
-  override def listAuthors: Future[Seq[Author]]            = Future(authors.values.toSeq)
+  override def listAuthors: Future[Vector[Author]]         = Future(authors.values.toVector)
   override def getAuthor(id: UUID): Future[Option[Author]] = Future(authors.get(id))
 
   override def createAuthor(author: Author): Future[Option[Author]] =

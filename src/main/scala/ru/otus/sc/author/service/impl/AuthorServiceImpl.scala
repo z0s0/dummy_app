@@ -34,16 +34,11 @@ class AuthorServiceImpl(dao: AuthorDao)(implicit val ThreadPool: ExecutionContex
     }
   }
 
-  override def updateAuthor(request: UpdateAuthorRequest): Future[UpdateAuthorResponse] = {
-    request.author.id match {
-      case Some(_) =>
-        dao.updateAuthor(request.author).map {
-          case Some(updatedAuthor) => UpdateAuthorResponse.Updated(updatedAuthor)
-          case None                => UpdateAuthorResponse.Invalid
-        }
-      case None => Future.successful(UpdateAuthorResponse.CannotUpdateWithoutID)
+  override def updateAuthor(request: UpdateAuthorRequest): Future[UpdateAuthorResponse] =
+    dao.updateAuthor(request.author).map {
+      case Some(updatedAuthor) => UpdateAuthorResponse.Updated(updatedAuthor)
+      case None                => UpdateAuthorResponse.Invalid
     }
-  }
 
   override def deleteAuthor(request: DeleteAuthorRequest): Future[DeleteAuthorResponse] =
     dao.deleteAuthor(request.id).map {

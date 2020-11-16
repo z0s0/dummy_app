@@ -41,16 +41,9 @@ class BookServiceImpl(dao: BookDao)(implicit val ThreadPool: ExecutionContext) e
 
   override def listBooks: Future[ListBooksResponse] = dao.listBooks.map(ListBooksResponse)
 
-  override def updateBook(request: UpdateBookRequest): Future[UpdateBookResponse] = {
-    request.book.id match {
-      case Some(_) =>
-        dao.updateBook(request.book).map {
-          case Some(updatedBook) => UpdateBookResponse.Updated(updatedBook)
-          case None              => UpdateBookResponse.NotFound
-        }
-
-      case None =>
-        Future.successful(UpdateBookResponse.CannotUpdateWithoutID)
+  override def updateBook(request: UpdateBookRequest): Future[UpdateBookResponse] =
+    dao.updateBook(request.book).map {
+      case Some(updatedBook) => UpdateBookResponse.Updated(updatedBook)
+      case None              => UpdateBookResponse.NotFound
     }
-  }
 }
