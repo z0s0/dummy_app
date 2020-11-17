@@ -12,9 +12,10 @@ import cats.effect._
 import cats.implicits._
 import doobie.util.transactor.Transactor
 import ru.otus.sc.author.dao.AuthorDao
-import ru.otus.sc.author.dao.impl.AuthorDaoDoobieImpl.AuthorRow
+import ru.otus.sc.author.dao.impl.AuthorDaoDoobieImpl.{AuthorGenre, AuthorRow}
 import ru.otus.sc.author.model.{Author, Genre}
 import ru.otus.sc.ModelHelpers._
+
 import scala.concurrent.Future
 
 object AuthorDaoDoobieImpl {
@@ -25,16 +26,10 @@ object AuthorDaoDoobieImpl {
       Author(id = Some(id), name = name, genres = convertedGenres)
     }
   }
+
+  case class AuthorGenre(authorID: UUID, genreID: UUID)
 }
 class AuthorDaoDoobieImpl(tr: Transactor[IO]) extends AuthorDao {
-  def pidor(id: UUID) = {
-    (for {
-      u <- selectAuthor(id, forUpdate = false)
-    } yield u.map(_.toAuthor))
-      .transact(tr)
-      .unsafeRunSync()
-  }
-
   override def listAuthors: Future[Vector[Author]] =
     sql"""
          select a.id, a.name, array_agg(g.name) from authors a
@@ -72,9 +67,76 @@ class AuthorDaoDoobieImpl(tr: Transactor[IO]) extends AuthorDao {
       .option
   }
 
-  override def createAuthor(author: Author): Future[Option[Author]] = ???
+  private def insertGenres(authorID: UUID, genres: Set[Genre]): ConnectionIO[Int] = {
+    val genresToInsertAsStrings = genres.map(stringFromGenre).toList
+    val genresIdsToInsert = sql"""select id from genres where name in $genresToInsertAsStrings"""
+      .query[UUID]
+      .to[Vector]
 
-  override def updateAuthor(author: Author): Future[Option[Author]] = ???
+    val sql = "insert into authors_genres(author_id, genre_id) values (?, ?)"
 
-  override def deleteAuthor(id: UUID): Future[Option[Author]] = ???
+    genresIdsToInsert.flatMap { ids =>
+      Update[AuthorGenre](sql).updateMany(ids.map(AuthorGenre(authorID, _)))
+    }
+  }
+
+  override def createAuthor(author: Author): Future[Option[Author]] = {
+    val insertAuthor =
+      sql"""insert into authors(name, created_at, updated_at)
+            values(${author.name}, NOW(), NOW()) 
+         """.update
+        .withGeneratedKeys[UUID]("id")
+        .compile
+        .lastOrError
+
+    val res = for {
+      newId <- insertAuthor
+      _     <- insertGenres(newId, author.genres)
+    } yield Some(author.copy(id = Some(newId)))
+
+    res.transact(tr).unsafeToFuture()
+  }
+
+  override def updateAuthor(author: Author): Future[Option[Author]] = {
+    author match {
+      case Author(Some(id), name, genres) =>
+        val update =
+          sql"""
+               update authors set name = $name
+               where id = $id
+             """.update.run
+
+        val deleteGenres   = sql"""delete from authors_genres where author_id = $id""".update.run
+        val insertGenresIO = insertGenres(id, genres)
+
+        val res = for {
+          authorRow <- selectAuthor(id, forUpdate = true)
+          _ <- authorRow match {
+            case Some(_) =>
+              update *> deleteGenres *> insertGenresIO
+            case None => ().pure[ConnectionIO]
+          }
+        } yield authorRow.map(_.toAuthor)
+
+        res.transact(tr).unsafeToFuture()
+      case _ => Future.successful(None)
+    }
+  }
+
+  override def deleteAuthor(id: UUID): Future[Option[Author]] = {
+    val res = for {
+      authorRow <- selectAuthor(id, forUpdate = true)
+      _ <- authorRow match {
+        case Some(AuthorRow(_, _, _)) =>
+          val deleteGenres = sql"""delete from authors_genres where author_id = $id""".update.run
+          val deleteAuthor = sql"""delete from authors where id = $id""".update.run
+
+          deleteGenres *> deleteAuthor
+        case None => ().pure[ConnectionIO]
+
+      }
+    } yield authorRow.map(_.toAuthor)
+
+    res.transact(tr).unsafeToFuture()
+  }
 }
