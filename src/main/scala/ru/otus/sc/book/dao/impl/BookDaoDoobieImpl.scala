@@ -53,40 +53,39 @@ class BookDaoDoobieImpl(tr: Transactor[IO]) extends BookDao {
       .unsafeToFuture()
   }
   override def getBook(id: UUID): Future[Option[Book]] = {
+
     (for {
-      b <- selectBook(id, forUpdate = false)
+      b <- selectBook(id)
     } yield b.map(_.toBook))
       .transact(tr)
       .unsafeToFuture()
   }
 
-  private def selectBook(id: UUID, forUpdate: Boolean): ConnectionIO[Option[BookRow]] = {
-    val base =
-      fr"""select b.id, b.name, a.name, b.published_year, b.pages_count, g.name from books b 
+  private def selectBook(id: UUID): ConnectionIO[Option[BookRow]] = {
+    sql"""select b.id, b.name, a.name, b.published_year, b.pages_count, g.name from books b 
            left join authors a on a.id = b.author_id 
            left join genres g on g.id = b.genre_id
            where b.id = $id
         """
-
-    val sql = if (forUpdate) base ++ fr" FOR UPDATE" else base
-
-    sql
       .query[BookRow]
       .option
   }
-
   private def insertBook(book: Book, authorId: Option[UUID], genreId: Option[UUID]) = {
     authorId match {
       case Some(aId) =>
         genreId match {
           case Some(gId) =>
             sql"""insert into
-              books(name, author_id, genre_id, published_year, pages_count) values
-              (${book.name}, $aId, $gId, ${book.publishedYear}, ${book.pagesCount})
-             """.update.run
-          case None => ().pure[ConnectionIO]
+              books(name, author_id, genre_id, published_year, pages_count, created_at, updated_at) values
+              (${book.name}, $aId, $gId, ${book.publishedYear}, ${book.pagesCount}, NOW(), NOW())
+             """.update
+              .withGeneratedKeys[UUID]("id")
+              .compile
+              .lastOrError
+
+          case None => (UUID.randomUUID()).pure[ConnectionIO]
         }
-      case None => ().pure[ConnectionIO]
+      case None => (UUID.randomUUID()).pure[ConnectionIO]
     }
   }
 
@@ -94,8 +93,8 @@ class BookDaoDoobieImpl(tr: Transactor[IO]) extends BookDao {
     val res = for {
       genreIdOption  <- genreIdIO(book.genre)
       authorIdOption <- authorIdIO(book.authorName)
-      _              <- insertBook(book, authorIdOption, genreIdOption)
-    } yield Some(book)
+      newId          <- insertBook(book, authorIdOption, genreIdOption)
+    } yield Some(book.copy(id = Some(newId)))
 
     res.transact(tr).unsafeToFuture()
   }
@@ -104,20 +103,22 @@ class BookDaoDoobieImpl(tr: Transactor[IO]) extends BookDao {
     book match {
       case Book(Some(id), name, authorName, publishedYear, pagesCount, genre) =>
         val res = for {
-          genreIdOption <- genreIdIO(genre)
-          authorIdOpton <- authorIdIO(authorName)
+          bookRow        <- selectBook(id)
+          genreIdOption  <- genreIdIO(genre)
+          authorIdOption <- authorIdIO(authorName)
           _ <- genreIdOption match {
             case Some(gId) =>
-              authorIdOpton match {
+              authorIdOption match {
                 case Some(aId) =>
                   sql"""
                        update books set author_id = $aId, genre_id = $gId, name = $name, published_year= $publishedYear, pages_count=$pagesCount
                        where id = $id
                      """.update.run
-                case None => ().pure[ConnectionIO]
+                case None => None.pure[ConnectionIO]
               }
+            case None => None.pure[ConnectionIO]
           }
-        } yield Some(book)
+        } yield bookRow.map(_ => book)
 
         res.transact(tr).unsafeToFuture()
       case _ => Future.successful(None)
@@ -126,7 +127,7 @@ class BookDaoDoobieImpl(tr: Transactor[IO]) extends BookDao {
 
   override def deleteBook(id: UUID): Future[Option[Book]] = {
     val res = for {
-      bookRow <- selectBook(id, forUpdate = true)
+      bookRow <- selectBook(id)
       _ <- bookRow match {
         case Some(_) =>
           sql"""delete from books where id = $id""".update.run
@@ -136,6 +137,8 @@ class BookDaoDoobieImpl(tr: Transactor[IO]) extends BookDao {
 
     res.transact(tr).unsafeToFuture()
   }
+
+  def deleteAll(): Future[Int] = sql"delete from books".update.run.transact(tr).unsafeToFuture()
 
   private def genreIdIO(genre: Genre): ConnectionIO[Option[UUID]] =
     sql"""select id from genres where name = ${stringFromGenre(genre)}""".query[UUID].option

@@ -14,8 +14,8 @@ object Generators {
     bookName      <- arbitrary[String]
     authorName    <- arbitrary[String]
     genre         <- arbitrary[Genre]
-    publishedYear <- arbitrary[Int]
-    pagesCount    <- arbitrary[Int]
+    publishedYear <- Gen.choose(-5000, 2020)
+    pagesCount    <- Gen.choose(1, 1000)
   } yield Book(
     id = Some(id),
     name = bookName,

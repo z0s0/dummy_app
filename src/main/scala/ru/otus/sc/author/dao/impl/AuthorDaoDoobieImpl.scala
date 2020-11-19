@@ -45,38 +45,39 @@ class AuthorDaoDoobieImpl(tr: Transactor[IO]) extends AuthorDao {
 
   override def getAuthor(id: UUID): Future[Option[Author]] = {
     (for {
-      u <- selectAuthor(id, forUpdate = false)
+      u <- selectAuthor(id)
     } yield u.map(_.toAuthor))
       .transact(tr)
       .unsafeToFuture()
   }
 
-  private def selectAuthor(id: UUID, forUpdate: Boolean): ConnectionIO[Option[AuthorRow]] = {
-    val base = fr"""
+  private def selectAuthor(id: UUID): ConnectionIO[Option[AuthorRow]] = {
+    sql"""
          select a.id, a.name, array_agg(g.name) from authors a
          left join authors_genres ag on ag.author_id = a.id
          left join genres g on g.id = ag.genre_id
          where a.id = $id
          group by 1,2
       """
-
-    val sql = if (forUpdate) base ++ fr""" FOR UPDATE""" else base
-
-    sql
       .query[AuthorRow]
       .option
   }
 
   private def insertGenres(authorID: UUID, genres: Set[Genre]): ConnectionIO[Int] = {
-    val genresToInsertAsStrings = genres.map(stringFromGenre).toList
-    val genresIdsToInsert = sql"""select id from genres where name in $genresToInsertAsStrings"""
-      .query[UUID]
-      .to[Vector]
+    NonEmptyList.fromList(genres.map(stringFromGenre).toList) match {
+      case Some(listGenres) =>
+        val genresIdsToInsert =
+          (fr"select id from genres where" ++ Fragments.in(fr"name", listGenres))
+            .query[UUID]
+            .to[Vector]
 
-    val sql = "insert into authors_genres(author_id, genre_id) values (?, ?)"
+        val sql =
+          "insert into authors_genres(author_id, genre_id, created_at, updated_at) values (?, ?, NOW(), NOW())"
 
-    genresIdsToInsert.flatMap { ids =>
-      Update[AuthorGenre](sql).updateMany(ids.map(AuthorGenre(authorID, _)))
+        genresIdsToInsert.flatMap { ids =>
+          Update[AuthorGenre](sql).updateMany(ids.map(AuthorGenre(authorID, _)))
+        }
+      case None => 0.pure[ConnectionIO]
     }
   }
 
@@ -110,7 +111,7 @@ class AuthorDaoDoobieImpl(tr: Transactor[IO]) extends AuthorDao {
         val insertGenresIO = insertGenres(id, genres)
 
         val res = for {
-          authorRow <- selectAuthor(id, forUpdate = true)
+          authorRow <- selectAuthor(id)
           _ <- authorRow match {
             case Some(_) =>
               update *> deleteGenres *> insertGenresIO
@@ -125,7 +126,7 @@ class AuthorDaoDoobieImpl(tr: Transactor[IO]) extends AuthorDao {
 
   override def deleteAuthor(id: UUID): Future[Option[Author]] = {
     val res = for {
-      authorRow <- selectAuthor(id, forUpdate = true)
+      authorRow <- selectAuthor(id)
       _ <- authorRow match {
         case Some(AuthorRow(_, _, _)) =>
           val deleteGenres = sql"""delete from authors_genres where author_id = $id""".update.run
@@ -138,5 +139,11 @@ class AuthorDaoDoobieImpl(tr: Transactor[IO]) extends AuthorDao {
     } yield authorRow.map(_.toAuthor)
 
     res.transact(tr).unsafeToFuture()
+  }
+
+  def deleteAll(): Future[Int] = {
+    (sql"delete from authors_genres".update.run *> sql"delete from authors".update.run)
+      .transact(tr)
+      .unsafeToFuture()
   }
 }

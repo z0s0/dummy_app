@@ -83,6 +83,6 @@ object Main {
 
     val init = IO(new Migrations(config).applyMigrationsSync())
 
-    app.unsafeRunSync()
+    (init *> app).unsafeRunSync()
   }
 }
