@@ -52,6 +52,7 @@ class BookDaoDoobieImpl(tr: Transactor[IO]) extends BookDao {
       .transact(tr)
       .unsafeToFuture()
   }
+
   override def getBook(id: UUID): Future[Option[Book]] = {
 
     (for {

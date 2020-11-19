@@ -17,9 +17,8 @@ import ru.otus.sc.author.model.{
   UpdateAuthorRequest,
   UpdateAuthorResponse
 }
-import ru.otus.sc.filter.service.FilterService
 
-class AuthorRouter(authorService: AuthorService, filterService: FilterService) {
+class AuthorRouter(authorService: AuthorService) {
   def route: Route =
     pathPrefix("authors") {
       getAuthor ~ listAuthors ~ createAuthor ~ deleteAuthor ~ updateAuthor
@@ -34,18 +33,11 @@ class AuthorRouter(authorService: AuthorService, filterService: FilterService) {
     }
 
   private def listAuthors: Route = {
-    (get & parameters("name".optional, "genre".optional, "publicationYear".optional)) {
-      (name, genre, pubYear) =>
-        val request = List(name, genre, pubYear).filter(_.nonEmpty) match {
-          case List() => None
-          case params => Some(FilterAuthors)
-        }
-
-        onSuccess(filterService.filterAuthors) { resp =>
-          complete(resp.authors)
-        }
+    get {
+      onSuccess(authorService.listAuthors) { resp =>
+        complete(resp.authors)
+      }
     }
-
   }
 
   private def createAuthor: Route = {

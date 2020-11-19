@@ -1,5 +1,3 @@
-import java.util.UUID
-
 import cats.implicits._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -9,7 +7,7 @@ import ru.otus.sc.author.dao.impl.AuthorDaoDoobieImpl
 import ru.otus.sc.author.service.impl.AuthorServiceImpl
 import ru.otus.sc.ThreadPool.CustomThreadPool
 import ru.otus.sc.author.route.AuthorRouter
-import ru.otus.sc.book.dao.impl.{BookDaoDoobieImpl, BookDaoMapImpl}
+import ru.otus.sc.book.dao.impl.BookDaoDoobieImpl
 import ru.otus.sc.book.route.BookRouter
 import ru.otus.sc.book.service.impl.BookServiceImpl
 import cats.effect.{Blocker, ContextShift, IO, Resource}
@@ -18,7 +16,6 @@ import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import ru.otus.sc.Config
 import ru.otus.sc.db.Migrations
-import ru.otus.sc.filter.service.impl.FilterServiceImpl
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.io.StdIn
@@ -30,10 +27,10 @@ object Main {
 
     val authorService = new AuthorServiceImpl(authorDao, CustomThreadPool)
     val bookService   = new BookServiceImpl(bookDao, CustomThreadPool)
-    val filterService = new FilterServiceImpl(authorService, bookService, CustomThreadPool)
 
-    val authorRouter = new AuthorRouter(authorService, filterService)
-    val bookRouter   = new BookRouter(bookService)
+    val authorRouter = new AuthorRouter(authorService)
+
+    val bookRouter = new BookRouter(bookService)
 
     authorRouter.route ~ bookRouter.route
   }

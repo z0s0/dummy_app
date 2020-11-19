@@ -37,10 +37,9 @@ class AuthorRouterTest
     with ScalaCheckDrivenPropertyChecks
     with ScalaFutures {
 
-  val srv: AuthorService       = mock[AuthorService]
-  val filterSrv: FilterService = mock[FilterService]
+  val srv: AuthorService = mock[AuthorService]
 
-  val router: AuthorRouter = new AuthorRouter(srv, filterSrv)
+  val router: AuthorRouter = new AuthorRouter(srv)
 
   "GET /authors" in {
     val authors = List(genAuthor.sample.get, genAuthor.sample.get)
