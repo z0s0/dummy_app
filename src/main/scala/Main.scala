@@ -18,6 +18,7 @@ import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import ru.otus.sc.Config
 import ru.otus.sc.db.Migrations
+import ru.otus.sc.filter.service.impl.FilterServiceImpl
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.io.StdIn
@@ -29,8 +30,9 @@ object Main {
 
     val authorService = new AuthorServiceImpl(authorDao, CustomThreadPool)
     val bookService   = new BookServiceImpl(bookDao, CustomThreadPool)
+    val filterService = new FilterServiceImpl(authorService, bookService, CustomThreadPool)
 
-    val authorRouter = new AuthorRouter(authorService)
+    val authorRouter = new AuthorRouter(authorService, filterService)
     val bookRouter   = new BookRouter(bookService)
 
     authorRouter.route ~ bookRouter.route

@@ -52,7 +52,9 @@ class BookRouter(bookService: BookService) {
     }
   }
   private def updateBook: Route = {
-    (put & path(JavaUUID) & entity(as[Book]).map(UpdateBookRequest)) { (_, request) =>
+    (put & path(JavaUUID) & entity(as[Book])) { (id, book) =>
+      val request = UpdateBookRequest(book.copy(id = Some(id)))
+
       onSuccess(bookService.updateBook(request)) {
         case UpdateBookResponse.Updated(book) =>
           complete(book)

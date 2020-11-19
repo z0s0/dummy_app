@@ -98,8 +98,6 @@ abstract class AuthorDaoTest(
 
       val createdAuthor = dao.createAuthor(author).futureValue.get
 
-      println(createdAuthor)
-
       val deletedAuthor = dao.deleteAuthor(createdAuthor.id.get).futureValue.get
 
       deletedAuthor shouldBe createdAuthor

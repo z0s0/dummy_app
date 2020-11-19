@@ -13,13 +13,16 @@ import ru.otus.sc.author.model.{
   DeleteAuthorRequest,
   DeleteAuthorResponse,
   GetAuthorRequest,
-  GetAuthorResponse
+  GetAuthorResponse,
+  UpdateAuthorRequest,
+  UpdateAuthorResponse
 }
+import ru.otus.sc.filter.service.FilterService
 
-class AuthorRouter(authorService: AuthorService) {
+class AuthorRouter(authorService: AuthorService, filterService: FilterService) {
   def route: Route =
     pathPrefix("authors") {
-      getAuthor ~ listAuthors ~ createAuthor ~ deleteAuthor
+      getAuthor ~ listAuthors ~ createAuthor ~ deleteAuthor ~ updateAuthor
     }
 
   private def getAuthor: Route =
@@ -30,25 +33,45 @@ class AuthorRouter(authorService: AuthorService) {
       }
     }
 
-  private def listAuthors: Route =
-    get {
-      onSuccess(authorService.listAuthors) { response =>
-        complete(response.authors)
-      }
+  private def listAuthors: Route = {
+    (get & parameters("name".optional, "genre".optional, "publicationYear".optional)) {
+      (name, genre, pubYear) =>
+        val request = List(name, genre, pubYear).filter(_.nonEmpty) match {
+          case List() => None
+          case params => Some(FilterAuthors)
+        }
+
+        onSuccess(filterService.filterAuthors) { resp =>
+          complete(resp.authors)
+        }
     }
+
+  }
 
   private def createAuthor: Route = {
     (post & entity(as[Author]).map(CreateAuthorRequest)) { request =>
       onSuccess(authorService.createAuthor(request)) {
         case CreateAuthorResponse.Created(author) =>
-          complete(author)
+          complete(StatusCodes.Created, author)
         case CreateAuthorResponse.Invalid =>
           complete(StatusCodes.UnprocessableEntity)
       }
     }
   }
 
-  private def updateAuthor: Route = ???
+  private def updateAuthor: Route = {
+    (put & path(JavaUUID) & entity(as[Author])) { (id, author) =>
+      val authorWithID = author.copy(id = Some(id))
+      val request      = UpdateAuthorRequest(authorWithID)
+
+      onSuccess(authorService.updateAuthor(request)) {
+        case UpdateAuthorResponse.Updated(author) =>
+          complete(author)
+        case UpdateAuthorResponse.Invalid =>
+          complete(StatusCodes.UnprocessableEntity)
+      }
+    }
+  }
 
   private def deleteAuthor: Route =
     (delete & path(JavaUUID.map(DeleteAuthorRequest))) { request =>
@@ -59,4 +82,5 @@ class AuthorRouter(authorService: AuthorService) {
           complete(StatusCodes.NotFound)
       }
     }
+
 }
