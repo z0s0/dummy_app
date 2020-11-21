@@ -12,4 +12,4 @@ object AuthorsFilter {
 
 case class FilterAuthorsRequest(filters: Option[Seq[AuthorsFilter]], limit: Option[Int])
 
-case class FilterAuthorsResponse(authors: Seq[Author])
+case class FilterAuthorsResponse(authors: Vector[Author])

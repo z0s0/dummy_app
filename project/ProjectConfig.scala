@@ -3,8 +3,8 @@ import sbt._
 object ProjectConfig {
 
   object versions {
-    val akka        = "2.6.8"
-    val `akka-http` = "10.2.0"
+    val akka        = "2.6.10"
+    val `akka-http` = "10.2.1"
 
     val `akka-http-play-json` = "1.34.0"
     val `play-json`           = "2.9.0"
@@ -30,6 +30,8 @@ object ProjectConfig {
     val slf4j = "1.7.30"
 
     val testcontainers = "0.38.1"
+
+    val tapir = "0.17.0-M9"
   }
 
   val testDependencies = Seq(
@@ -39,6 +41,15 @@ object ProjectConfig {
     "org.scalatestplus"          %% "scalacheck-1-14"           % versions.`scalacheck-1-14`           % Test,
     "org.scalamock"              %% "scalamock"                 % versions.scalamock                   % Test,
     "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % versions.`scalacheck-shapeless_1.14` % Test
+  )
+
+  val tapirDeps = Seq(
+    "com.softwaremill.sttp.tapir" %% "tapir-akka-http-server"     % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-core"                 % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-json-play"            % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs"         % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-openapi-circe-yaml"   % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-akka-http" % versions.tapir
   )
 
   val akkaDependencies = Seq(
@@ -85,5 +96,6 @@ object ProjectConfig {
       doobieDependencies ++
       slickDependencies ++
       logDependencies ++
-      dbDependencies ++ Seq()
+      dbDependencies ++
+      tapirDeps
 }

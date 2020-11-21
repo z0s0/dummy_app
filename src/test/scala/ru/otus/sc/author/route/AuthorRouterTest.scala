@@ -25,9 +25,8 @@ import ru.otus.sc.author.model.{
 }
 import ru.otus.sc.author.json.AuthorJsonProtocol._
 import ru.otus.sc.author.service.AuthorService
-import ru.otus.sc.filter.service.FilterService
 import ru.otus.sc.support.Generators._
-
+import scala.concurrent.ExecutionContext.global
 import scala.concurrent.Future
 
 class AuthorRouterTest
@@ -39,10 +38,10 @@ class AuthorRouterTest
 
   val srv: AuthorService = mock[AuthorService]
 
-  val router: AuthorRouter = new AuthorRouter(srv)
+  val router: AuthorRouter = new AuthorRouter(srv, global)
 
   "GET /authors" in {
-    val authors = List(genAuthor.sample.get, genAuthor.sample.get)
+    val authors = Vector(genAuthor.sample.get, genAuthor.sample.get)
     val request = Get("/authors")
 
     (srv.listAuthors _).expects().returns(Future.successful(ListAuthorsResponse(authors)))

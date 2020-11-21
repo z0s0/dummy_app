@@ -1,13 +1,9 @@
 package ru.otus.sc.book.route
 
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import ru.otus.sc.book.service.BookService
-import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport._
-import ru.otus.sc.book.json.BookJsonProtocol._
 import ru.otus.sc.book.model.{
-  Book,
   CreateBookRequest,
   CreateBookResponse,
   DeleteBookRequest,
@@ -17,61 +13,48 @@ import ru.otus.sc.book.model.{
   UpdateBookRequest,
   UpdateBookResponse
 }
+import sttp.tapir.server.akkahttp._
 
-class BookRouter(bookService: BookService) {
-  def route: Route =
-    pathPrefix("books") {
-      getBook ~ listBooks ~ createBook ~ deleteBook ~ updateBook
-    }
+import scala.concurrent.ExecutionContextExecutor
+
+class BookRouter(bookService: BookService, implicit val ex: ExecutionContextExecutor) {
+  def route: Route = getBook ~ listBooks ~ createBook ~ deleteBook ~ updateBook
 
   private def getBook: Route =
-    (get & path(JavaUUID.map(GetBookRequest))) { request =>
-      onSuccess(bookService.getBook(request)) {
-        case GetBookResponse.Found(book) =>
-          complete(book)
-        case GetBookResponse.NotFound =>
-          complete(StatusCodes.NotFound)
+    BookRoutesDocs.getBook.toRoute(id => {
+      bookService.getBook(GetBookRequest(id)).map {
+        case GetBookResponse.Found(book) => Right(book)
+        case GetBookResponse.NotFound    => Left()
       }
-    }
+    })
 
   private def listBooks: Route =
-    get {
-      onSuccess(bookService.listBooks) { response =>
-        complete(response.books)
+    BookRoutesDocs.listBooks.toRoute(_ => bookService.listBooks.map(res => Right(res.books)))
+
+  private def createBook: Route =
+    BookRoutesDocs.createBook.toRoute(book => {
+      bookService.createBook(CreateBookRequest(book)).map {
+        case CreateBookResponse.Created(book) => Right(book)
+        case CreateBookResponse.Invalid       => Left()
       }
+    })
+
+  private def updateBook: Route =
+    BookRoutesDocs.updateBook.toRoute {
+      case (id, book) =>
+        val req = UpdateBookRequest(book.copy(id = Some(id)))
+
+        bookService.updateBook(req).map {
+          case UpdateBookResponse.Updated(book) => Right(book)
+          case UpdateBookResponse.NotFound      => Left()
+        }
     }
 
-  private def createBook: Route = {
-    (post & entity(as[Book]).map(CreateBookRequest)) { request =>
-      onSuccess(bookService.createBook(request)) {
-        case CreateBookResponse.Created(book) =>
-          complete(StatusCodes.Created, book)
-        case CreateBookResponse.Invalid =>
-          complete(StatusCodes.UnprocessableEntity)
+  private def deleteBook: Route =
+    BookRoutesDocs.deleteBook.toRoute { id =>
+      bookService.deleteBook(DeleteBookRequest(id)).map {
+        case DeleteBookResponse.Deleted(book) => Right(book)
+        case DeleteBookResponse.NotFound      => Left()
       }
     }
-  }
-  private def updateBook: Route = {
-    (put & path(JavaUUID) & entity(as[Book])) { (id, book) =>
-      val request = UpdateBookRequest(book.copy(id = Some(id)))
-
-      onSuccess(bookService.updateBook(request)) {
-        case UpdateBookResponse.Updated(book) =>
-          complete(book)
-        case UpdateBookResponse.NotFound =>
-          complete(StatusCodes.NotFound)
-      }
-    }
-  }
-
-  private def deleteBook: Route = {
-    (delete & path(JavaUUID).map(DeleteBookRequest)) { request =>
-      onSuccess(bookService.deleteBook(request)) {
-        case DeleteBookResponse.Deleted(book) =>
-          complete(StatusCodes.Found, book)
-        case DeleteBookResponse.NotFound =>
-          complete(StatusCodes.NotFound)
-      }
-    }
-  }
 }

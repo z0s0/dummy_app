@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class BookDaoMapImpl(implicit val ThreadPool: ExecutionContext) extends BookDao {
   private var books = Map[UUID, Book]()
 
-  override def listBooks: Future[Seq[Book]]            = Future(books.values.toSeq)
+  override def listBooks: Future[Vector[Book]]         = Future(books.values.toVector)
   override def getBook(id: UUID): Future[Option[Book]] = Future(books.get(id))
 
   override def updateBook(book: Book): Future[Option[Book]] =

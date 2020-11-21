@@ -72,7 +72,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
 
     (dao.listBooks _)
       .expects()
-      .returns(Future.successful(List(book1, book2)))
+      .returns(Future.successful(Vector(book1, book2)))
 
     srv.listBooks.futureValue.books.toSet shouldBe Set(book2, book1)
   }

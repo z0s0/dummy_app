@@ -65,22 +65,23 @@ class FilterServiceImpl(
     }
   }
 
-  private def maybeApplyLimit[T](collection: Seq[T], limit: Option[Int]): Seq[T] = {
+  private def maybeApplyLimit[T](collection: Vector[T], limit: Option[Int]): Vector[T] = {
     limit match {
       case Some(lim) => collection.take(lim)
       case None      => collection
     }
   }
 
-  private def filterByPublicationYear(authors: Seq[Author], year: Int): Seq[Author] = {
+  private def filterByPublicationYear(authors: Seq[Author], year: Int): Vector[Author] = {
     val listBooks =
       Await.result(bookService.listBooks, 1.second).books.filter(_.publishedYear == year)
+
     val authorNames = listBooks.map(_.authorName).toSet
 
-    authors.filter(author => authorNames.contains(author.name))
+    authors.filter(author => authorNames.contains(author.name)).toVector
   }
 
-  private def filterBooksWithSignificantAuthors(books: Seq[Book]): Seq[Book] = {
+  private def filterBooksWithSignificantAuthors(books: Vector[Book]): Vector[Book] = {
     val listBooks = Await.result(bookService.listBooks, 1.second).books
     val significantAuthorsNames =
       listBooks

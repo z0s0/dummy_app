@@ -16,4 +16,4 @@ case object BooksFilter {
 
 case class FilterBooksRequest(filters: Option[Seq[BooksFilter]], limit: Option[Int])
 
-case class FilterBooksResponse(books: Seq[Book])
+case class FilterBooksResponse(books: Vector[Book])

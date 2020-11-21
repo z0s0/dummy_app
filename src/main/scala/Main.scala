@@ -5,9 +5,9 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import ru.otus.sc.author.dao.impl.AuthorDaoDoobieImpl
 import ru.otus.sc.author.service.impl.AuthorServiceImpl
-import ru.otus.sc.author.route.AuthorRouter
+import ru.otus.sc.author.route.{AuthorRouter, AuthorRoutesDocs}
 import ru.otus.sc.book.dao.impl.BookDaoDoobieImpl
-import ru.otus.sc.book.route.BookRouter
+import ru.otus.sc.book.route.{BookRouter, BookRoutesDocs}
 import ru.otus.sc.book.service.impl.BookServiceImpl
 import cats.effect.{Blocker, ContextShift, IO, Resource}
 import doobie.hikari.HikariTransactor
@@ -15,9 +15,15 @@ import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import ru.otus.sc.Config
 import ru.otus.sc.db.Migrations
+import ru.otus.sc.author.route.AuthorRoutesDocs
+import ru.otus.sc.book.route.BookRoutesDocs
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.io.StdIn
+import sttp.tapir.openapi.circe.yaml._
+import sttp.tapir.openapi.OpenAPI
+import sttp.tapir.docs.openapi._
+import sttp.tapir.swagger.akkahttp.SwaggerAkka
 
 object Main {
   def createRoute(tr: Transactor[IO])(implicit ec: ExecutionContextExecutor): Route = {
@@ -27,11 +33,15 @@ object Main {
     val authorService = new AuthorServiceImpl(authorDao)
     val bookService   = new BookServiceImpl(bookDao)
 
-    val authorRouter = new AuthorRouter(authorService)
+    val combinedRoutes = BookRoutesDocs.routes ++ AuthorRoutesDocs.routes
 
-    val bookRouter = new BookRouter(bookService)
+    val yamlDocs = combinedRoutes.toOpenAPI("Otus app", "0.1").toYaml
 
-    authorRouter.route ~ bookRouter.route
+    val authorRouter = new AuthorRouter(authorService, CustomThreadPool)
+
+    val bookRouter = new BookRouter(bookService, CustomThreadPool)
+
+    authorRouter.route ~ bookRouter.route ~ (new SwaggerAkka(yamlDocs).routes)
   }
 
   def main(args: Array[String]): Unit = {
@@ -81,6 +91,6 @@ object Main {
 
     val init = IO(new Migrations(config).applyMigrationsSync())
 
-    (init *> app).unsafeRunSync()
+    app.unsafeRunSync()
   }
 }
