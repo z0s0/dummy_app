@@ -1,6 +1,5 @@
 package ru.otus.sc
 
-import ru.otus.sc.ThreadPool.CustomThreadPool
 import ru.otus.sc.author.dao.impl.AuthorDaoMapImpl
 import ru.otus.sc.author.model.{
   CreateAuthorRequest,
@@ -38,7 +37,7 @@ import ru.otus.sc.filter.model.{
 import ru.otus.sc.filter.service.FilterService
 import ru.otus.sc.filter.service.impl.FilterServiceImpl
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.Future
 
 trait App {
   def getBook(request: GetBookRequest): Future[GetBookResponse]
@@ -90,13 +89,14 @@ object App {
   }
 
   def apply(): App = {
-    implicit val ThreadPool: ExecutionContextExecutor = CustomThreadPool
-    val bookDao                                       = new BookDaoMapImpl()
-    val bookService                                   = new BookServiceImpl(bookDao, ThreadPool)
-    val authorDao                                     = new AuthorDaoMapImpl()
-    val authorService                                 = new AuthorServiceImpl(authorDao, ThreadPool)
+    import ru.otus.sc.ThreadPool.CustomThreadPool
+
+    val bookDao       = new BookDaoMapImpl()
+    val bookService   = new BookServiceImpl(bookDao)
+    val authorDao     = new AuthorDaoMapImpl()
+    val authorService = new AuthorServiceImpl(authorDao)
     val filterService =
-      new FilterServiceImpl(authorService = authorService, bookService = bookService, ThreadPool)
+      new FilterServiceImpl(authorService = authorService, bookService = bookService)
 
     new AppImpl(bookService, authorService, filterService)
   }

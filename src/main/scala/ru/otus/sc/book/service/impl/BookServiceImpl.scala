@@ -16,7 +16,7 @@ import ru.otus.sc.book.service.BookService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class BookServiceImpl(dao: BookDao, implicit val ThreadPool: ExecutionContext) extends BookService {
+class BookServiceImpl(dao: BookDao)(implicit val ThreadPool: ExecutionContext) extends BookService {
   override def getBook(request: GetBookRequest): Future[GetBookResponse] = {
     dao.getBook(request.id).map {
       case Some(book) =>

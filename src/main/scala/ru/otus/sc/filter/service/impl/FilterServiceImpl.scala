@@ -19,9 +19,9 @@ import scala.concurrent.duration._
 
 class FilterServiceImpl(
     authorService: AuthorService,
-    bookService: BookService,
-    implicit val ThreadPool: ExecutionContextExecutor
-) extends FilterService {
+    bookService: BookService
+)(implicit val ThreadPool: ExecutionContextExecutor)
+    extends FilterService {
   override def filterAuthors(request: FilterAuthorsRequest): Future[FilterAuthorsResponse] = {
     authorService.listAuthors.map { listAuthorsResponse =>
       val authors = listAuthorsResponse.authors
@@ -73,7 +73,8 @@ class FilterServiceImpl(
   }
 
   private def filterByPublicationYear(authors: Seq[Author], year: Int): Seq[Author] = {
-    val listBooks   = Await.result(bookService.listBooks, 1.second).books
+    val listBooks =
+      Await.result(bookService.listBooks, 1.second).books.filter(_.publishedYear == year)
     val authorNames = listBooks.map(_.authorName).toSet
 
     authors.filter(author => authorNames.contains(author.name))

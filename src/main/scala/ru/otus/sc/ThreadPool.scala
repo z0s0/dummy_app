@@ -5,6 +5,6 @@ import java.util.concurrent.ForkJoinPool
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object ThreadPool {
-  implicit lazy val CustomThreadPool: ExecutionContextExecutor =
+  implicit val CustomThreadPool =
     ExecutionContext.fromExecutor(new ForkJoinPool(8))
 }

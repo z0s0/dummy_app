@@ -1,7 +1,6 @@
 package ru.otus.sc.filter.service.impl
 
 import java.util.UUID
-import java.util.concurrent.ForkJoinPool
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -13,6 +12,7 @@ import ru.otus.sc.author.service.impl.AuthorServiceImpl
 import ru.otus.sc.book.dao.impl.BookDaoMapImpl
 import ru.otus.sc.book.model.Book
 import ru.otus.sc.book.service.impl.BookServiceImpl
+import ru.otus.sc.ThreadPool.CustomThreadPool
 import ru.otus.sc.filter.model.{
   AuthorsFilter,
   BooksFilter,
@@ -20,17 +20,15 @@ import ru.otus.sc.filter.model.{
   FilterBooksRequest
 }
 
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class FilterServiceImplTest extends AnyFreeSpec with ScalaFutures with MockFactory {
-  implicit val ThreadPool: ExecutionContextExecutor =
-    ExecutionContext.fromExecutor(new ForkJoinPool())
 
   val bookDao       = new BookDaoMapImpl
   val authorDao     = new AuthorDaoMapImpl
-  val bookService   = new BookServiceImpl(bookDao, ThreadPool)
-  val authorService = new AuthorServiceImpl(authorDao, ThreadPool)
+  val bookService   = new BookServiceImpl(bookDao)
+  val authorService = new AuthorServiceImpl(authorDao)
 
   val book1: Book = Book(
     id = Some(UUID.randomUUID()),
@@ -85,7 +83,7 @@ class FilterServiceImplTest extends AnyFreeSpec with ScalaFutures with MockFacto
 
   "filterAuthors" - {
     "when empty filter and empty limit" in {
-      val srv = new FilterServiceImpl(authorService, bookService, ThreadPool)
+      val srv = new FilterServiceImpl(authorService, bookService)
       val req = FilterAuthorsRequest(filters = None, limit = None)
 
       Seq(author1, author2).foreach(createAuthor)
@@ -94,7 +92,7 @@ class FilterServiceImplTest extends AnyFreeSpec with ScalaFutures with MockFacto
     }
 
     "when empty filter and filled limit" in {
-      val srv = new FilterServiceImpl(authorService, bookService, ThreadPool)
+      val srv = new FilterServiceImpl(authorService, bookService)
       val req = FilterAuthorsRequest(filters = None, limit = Some(1))
 
       Seq(author1, author2, author3).foreach(createAuthor)
@@ -106,7 +104,7 @@ class FilterServiceImplTest extends AnyFreeSpec with ScalaFutures with MockFacto
     }
 
     "when filled filter and empty limit" in {
-      val srv    = new FilterServiceImpl(authorService, bookService, ThreadPool)
+      val srv    = new FilterServiceImpl(authorService, bookService)
       val filter = Seq(AuthorsFilter.ByPublicationYear(1950))
       val req    = FilterAuthorsRequest(limit = None, filters = Some(filter))
 
@@ -121,19 +119,19 @@ class FilterServiceImplTest extends AnyFreeSpec with ScalaFutures with MockFacto
 
   "filterBooks" - {
     "when empty filter and empty limit" in {
-      val srv = new FilterServiceImpl(authorService, bookService, ThreadPool)
+      val srv = new FilterServiceImpl(authorService, bookService)
       val req = FilterBooksRequest(filters = None, limit = None)
 
-      val books = Seq(book1, book2).map(createBook)
+      Seq(book1, book2).foreach(createBook)
 
-      srv.filterBooks(req).futureValue.books.toSet shouldBe books.toSet
+      srv.filterBooks(req).futureValue.books.toSet shouldBe Set(book1, book2)
     }
 
     "when empty filter and filled limit" in {
-      val srv = new FilterServiceImpl(authorService, bookService, ThreadPool)
+      val srv = new FilterServiceImpl(authorService, bookService)
       val req = FilterBooksRequest(filters = None, limit = Some(1))
 
-      val books = Seq(book1, book2).map(createBook)
+      val books = Seq(book1, book2).map(createBook).map(_.get)
 
       val result = srv.filterBooks(req).futureValue.books
 
@@ -142,17 +140,17 @@ class FilterServiceImplTest extends AnyFreeSpec with ScalaFutures with MockFacto
     }
 
     "when filled filter and empty limit" in {
-      val srv    = new FilterServiceImpl(authorService, bookService, ThreadPool)
+      val srv    = new FilterServiceImpl(authorService, bookService)
       val filter = Seq(BooksFilter.ByName("HP"))
       val req    = FilterBooksRequest(filters = Some(filter), limit = None)
 
       Seq(book1, book2).foreach(createBook)
 
-      srv.filterBooks(req) shouldBe Seq(book1)
+      srv.filterBooks(req).futureValue.books.toSet shouldBe Seq(book1).toSet
     }
 
     "when searching for significant authors" in {
-      val srv    = new FilterServiceImpl(authorService, bookService, ThreadPool)
+      val srv    = new FilterServiceImpl(authorService, bookService)
       val filter = Seq(BooksFilter.WithSignificantAuthors)
       val req    = FilterBooksRequest(filters = Some(filter), limit = None)
 

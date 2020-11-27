@@ -16,7 +16,7 @@ import ru.otus.sc.author.model.{
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuthorServiceImpl(dao: AuthorDao, implicit val ThreadPool: ExecutionContext)
+class AuthorServiceImpl(dao: AuthorDao)(implicit val ThreadPool: ExecutionContext)
     extends AuthorService {
   override def listAuthors: Future[ListAuthorsResponse] = dao.listAuthors.map(ListAuthorsResponse)
 

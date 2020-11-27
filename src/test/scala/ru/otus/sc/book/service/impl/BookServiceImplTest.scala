@@ -23,11 +23,9 @@ import ru.otus.sc.author.model.Genre
 import ru.otus.sc.book.dao.BookDao
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import ru.otus.sc.ThreadPool.CustomThreadPool
 
 class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures {
-
-  implicit val ThreadPool: ExecutionContextExecutor =
-    ExecutionContext.fromExecutor(new ForkJoinPool())
 
   val book1: Book = Book(
     id = Some(UUID.randomUUID()),
@@ -51,7 +49,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
     "when book is unknown" in {
       val id      = UUID.randomUUID()
       val dao     = mock[BookDao]
-      val srv     = new BookServiceImpl(dao, ThreadPool)
+      val srv     = new BookServiceImpl(dao)
       val request = GetBookRequest(id)
 
       (dao.getBook _).expects(id).returns(Future.successful(None))
@@ -61,7 +59,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
     "when book is known" in {
       val id      = UUID.randomUUID()
       val dao     = mock[BookDao]
-      val srv     = new BookServiceImpl(dao, ThreadPool)
+      val srv     = new BookServiceImpl(dao)
       val request = GetBookRequest(id)
 
       (dao.getBook _).expects(id).returns(Future.successful(Some(book1)))
@@ -71,7 +69,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
 
   "listBooks" in {
     val dao = mock[BookDao]
-    val srv = new BookServiceImpl(dao, ThreadPool)
+    val srv = new BookServiceImpl(dao)
 
     (dao.listBooks _)
       .expects()
@@ -82,7 +80,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
 
   "createBook" in {
     val dao = mock[BookDao]
-    val srv = new BookServiceImpl(dao, ThreadPool)
+    val srv = new BookServiceImpl(dao)
 
     val request = CreateBookRequest(book1)
 
@@ -94,7 +92,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
   "updateBook" - {
     "when known book" in {
       val dao = mock[BookDao]
-      val srv = new BookServiceImpl(dao, ThreadPool)
+      val srv = new BookServiceImpl(dao)
 
       val request = UpdateBookRequest(book1)
       val newName = "Harry popkin"
@@ -107,7 +105,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
 
     "when unknown book" in {
       val dao = mock[BookDao]
-      val srv = new BookServiceImpl(dao, ThreadPool)
+      val srv = new BookServiceImpl(dao)
 
       val request = UpdateBookRequest(book1)
 
@@ -120,7 +118,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
   "deleteBook" - {
     "when known book" in {
       val dao = mock[BookDao]
-      val srv = new BookServiceImpl(dao, ThreadPool)
+      val srv = new BookServiceImpl(dao)
 
       val request = DeleteBookRequest(book1.id)
 
@@ -130,7 +128,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
 
     "when unknown book" in {
       val dao = mock[BookDao]
-      val srv = new BookServiceImpl(dao, ThreadPool)
+      val srv = new BookServiceImpl(dao)
 
       val request = DeleteBookRequest(book1.id)
 

@@ -1,15 +1,13 @@
 package ru.otus.sc.book.dao.impl
 
-import ru.otus.sc.ThreadPool._
-
 import java.util.UUID
 
 import ru.otus.sc.book.dao.BookDao
 import ru.otus.sc.book.model.Book
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class BookDaoMapImpl extends BookDao {
+class BookDaoMapImpl(implicit val ThreadPool: ExecutionContext) extends BookDao {
   private var books = Map[UUID, Book]()
 
   override def listBooks: Future[Seq[Book]]            = Future(books.values.toSeq)

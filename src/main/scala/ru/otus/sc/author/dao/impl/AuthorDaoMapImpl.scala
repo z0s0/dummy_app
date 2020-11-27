@@ -2,14 +2,12 @@ package ru.otus.sc.author.dao.impl
 
 import java.util.UUID
 
-import ru.otus.sc.ThreadPool.CustomThreadPool
-
 import ru.otus.sc.author.dao.AuthorDao
 import ru.otus.sc.author.model.Author
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class AuthorDaoMapImpl extends AuthorDao {
+class AuthorDaoMapImpl(implicit val ThreadPool: ExecutionContext) extends AuthorDao {
   private var authors = Map[UUID, Author]()
 
   override def listAuthors: Future[Seq[Author]]            = Future(authors.values.toSeq)
