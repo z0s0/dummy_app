@@ -1,7 +1,7 @@
 package ru.otus.sc.author.service.impl
 
 import java.util.UUID
-import ru.otus.sc.ThreadPool.CustomThreadPool
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import org.scalatest.matchers.should.Matchers._
 import org.scalamock.scalatest.MockFactory

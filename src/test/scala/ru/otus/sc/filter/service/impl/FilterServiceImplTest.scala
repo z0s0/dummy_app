@@ -12,7 +12,7 @@ import ru.otus.sc.author.service.impl.AuthorServiceImpl
 import ru.otus.sc.book.dao.impl.BookDaoMapImpl
 import ru.otus.sc.book.model.Book
 import ru.otus.sc.book.service.impl.BookServiceImpl
-import ru.otus.sc.ThreadPool.CustomThreadPool
+import scala.concurrent.ExecutionContext.Implicits.global
 import ru.otus.sc.filter.model.{
   AuthorsFilter,
   BooksFilter,
@@ -22,6 +22,7 @@ import ru.otus.sc.filter.model.{
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class FilterServiceImplTest extends AnyFreeSpec with ScalaFutures with MockFactory {
 

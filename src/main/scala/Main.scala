@@ -5,7 +5,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import ru.otus.sc.author.dao.impl.AuthorDaoDoobieImpl
 import ru.otus.sc.author.service.impl.AuthorServiceImpl
-import ru.otus.sc.ThreadPool.CustomThreadPool
 import ru.otus.sc.author.route.AuthorRouter
 import ru.otus.sc.book.dao.impl.BookDaoDoobieImpl
 import ru.otus.sc.book.route.BookRouter
@@ -25,8 +24,8 @@ object Main {
     val authorDao = new AuthorDaoDoobieImpl(tr)
     val bookDao   = new BookDaoDoobieImpl(tr)
 
-    val authorService = new AuthorServiceImpl(authorDao, CustomThreadPool)
-    val bookService   = new BookServiceImpl(bookDao, CustomThreadPool)
+    val authorService = new AuthorServiceImpl(authorDao)
+    val bookService   = new BookServiceImpl(bookDao)
 
     val authorRouter = new AuthorRouter(authorService)
 
@@ -44,7 +43,7 @@ object Main {
           IO(
             Http()(system)
               .newServerAt("localhost", 5000)
-              .bind(createRoute(tr))
+              .bind(createRoute(tr)(system.dispatcher))
           )
         )
       )(b => IO.fromFuture(IO(b.unbind())).map(_ => ()))

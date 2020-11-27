@@ -1,6 +1,6 @@
 package ru.otus.sc.book.dao.impl
 
-import ru.otus.sc.ThreadPool.CustomThreadPool
+import scala.concurrent.ExecutionContext.Implicits.global
 import ru.otus.sc.author.dao.AuthorDao
 import ru.otus.sc.author.dao.impl.AuthorDaoMapImpl
 import ru.otus.sc.book.dao.{BookDao, BookDaoTest}

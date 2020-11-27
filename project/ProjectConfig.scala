@@ -85,5 +85,5 @@ object ProjectConfig {
       doobieDependencies ++
       slickDependencies ++
       logDependencies ++
-      dbDependencies
+      dbDependencies ++ Seq()
 }

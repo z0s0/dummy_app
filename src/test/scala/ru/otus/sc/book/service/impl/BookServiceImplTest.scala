@@ -15,15 +15,14 @@ import ru.otus.sc.book.model.{
   DeleteBookResponse,
   GetBookRequest,
   GetBookResponse,
-  ListBooksResponse,
   UpdateBookRequest,
   UpdateBookResponse
 }
 import ru.otus.sc.author.model.Genre
 import ru.otus.sc.book.dao.BookDao
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
-import ru.otus.sc.ThreadPool.CustomThreadPool
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures {
 
