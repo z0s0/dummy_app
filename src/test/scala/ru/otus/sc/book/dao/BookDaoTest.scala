@@ -2,81 +2,73 @@ package ru.otus.sc.book.dao
 
 import java.util.UUID
 
-import ru.otus.sc.author.model.Genre
-import ru.otus.sc.book.model.Book
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import org.scalacheck.{Arbitrary, Gen}
-import org.scalacheck.Arbitrary.arbitrary
+import ru.otus.sc.author.dao.AuthorDao
+import ru.otus.sc.author.dao.impl.{AuthorDaoDoobieImpl, AuthorDaoDoobieImplTest}
+import ru.otus.sc.author.model.Author
+import ru.otus.sc.book.model.Book
+import ru.otus.sc.support.Generators._
 
-abstract class BookDaoTest(name: String, createDao: () => BookDao)
+abstract class BookDaoTest(name: String)
     extends AnyFreeSpec
     with ScalaFutures
     with ScalaCheckDrivenPropertyChecks {
 
-  implicit lazy val genGenre: Gen[Genre]             = Gen.oneOf(Genre.NoGenre, Genre.Programming, Genre.Horror)
-  implicit lazy val arbitraryGenre: Arbitrary[Genre] = Arbitrary(genGenre)
-
-  implicit lazy val genBook: Gen[Book] = for {
-    id            <- Gen.uuid
-    bookName      <- arbitrary[String]
-    authorName    <- arbitrary[String]
-    genre         <- arbitrary[Genre]
-    publishedYear <- arbitrary[Int]
-    pagesCount    <- arbitrary[Int]
-  } yield Book(
-    id = Some(id),
-    name = bookName,
-    authorName = authorName,
-    genre = genre,
-    publishedYear = publishedYear,
-    pagesCount = pagesCount
-  )
-
-  implicit lazy val arbitraryBook: Arbitrary[Book] = Arbitrary(genBook)
+  def createDao: BookDao
+  def createAuthorDao: AuthorDao
 
   "getBook" - {
     "when known book" in {
-      val dao  = createDao()
+      val dao  = createDao
       val book = genBook.sample.get
 
-      dao.createBook(book).futureValue
+      println(book)
 
-      dao.getBook(book.id.get).futureValue shouldBe Some(book)
+      println(insertAuthorForBook(book))
+
+      val createdBook = dao.createBook(book).futureValue.get
+
+      println(createdBook)
+      dao.getBook(createdBook.id.get).futureValue shouldBe Some(createdBook)
     }
 
     "when unknown book" in {
-      val dao = createDao()
+      val dao = createDao
       dao.getBook(UUID.randomUUID()).futureValue shouldBe None
     }
   }
 
   "createBook" in {
-    val dao  = createDao()
+    val dao  = createDao
     val book = genBook.sample.get
+    insertAuthorForBook(book)
 
     val createdBook = dao.createBook(book).futureValue.get
 
-    createdBook shouldBe book
-    dao.getBook(book.id.get).futureValue shouldBe Some(book)
+    createdBook shouldBe book.copy(id = createdBook.id)
+
+    dao.getBook(createdBook.id.get).futureValue shouldBe Some(createdBook)
   }
 
   "updateBook" - {
     "when known book" in {
-      val dao     = createDao()
+      val dao     = createDao
       val book    = genBook.sample.get
       val newName = "??? Booooook"
 
-      dao.createBook(book).futureValue.get
-      dao.updateBook(book.copy(name = newName)).futureValue
+      insertAuthorForBook(book)
 
-      dao.getBook(book.id.get).futureValue.get.name shouldBe newName
+      val createdBook = dao.createBook(book).futureValue.get
+      dao.updateBook(createdBook.copy(name = newName)).futureValue
+
+      dao.getBook(createdBook.id.get).futureValue.get.name shouldBe newName
     }
 
     "when unknown book" in {
-      val dao  = createDao()
+      val dao  = createDao
       val book = genBook.sample.get
 
       dao.updateBook(book).futureValue shouldBe None
@@ -85,18 +77,20 @@ abstract class BookDaoTest(name: String, createDao: () => BookDao)
 
   "deleteBook" - {
     "known book" in {
-      val dao  = createDao()
+      val dao  = createDao
       val book = genBook.sample.get
 
-      dao.createBook(book).futureValue.get
-      val deletedBook = dao.deleteBook(book.id.get).futureValue
+      insertAuthorForBook(book)
 
-      deletedBook shouldBe Some(book)
-      dao.getBook(book.id.get).futureValue shouldBe None
+      val createdBook = dao.createBook(book).futureValue.get
+      val deletedBook = dao.deleteBook(createdBook.id.get).futureValue
+
+      deletedBook shouldBe Some(createdBook)
+      dao.getBook(createdBook.id.get).futureValue shouldBe None
     }
 
     "unknown book" in {
-      val dao  = createDao()
+      val dao  = createDao
       val book = genBook.sample.get
 
       val deletedBook = dao.deleteBook(book.id.get).futureValue
@@ -105,4 +99,10 @@ abstract class BookDaoTest(name: String, createDao: () => BookDao)
       dao.getBook(book.id.get).futureValue shouldBe None
     }
   }
+
+  private def insertAuthorForBook(book: Book): Author = {
+    val author = genAuthor.sample.get.copy(name = book.authorName)
+    createAuthorDao.createAuthor(author).futureValue.get
+  }
+
 }

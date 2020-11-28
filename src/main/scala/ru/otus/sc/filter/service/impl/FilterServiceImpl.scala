@@ -14,13 +14,13 @@ import ru.otus.sc.filter.model.{
 }
 import ru.otus.sc.filter.service.FilterService
 
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 
 class FilterServiceImpl(
     authorService: AuthorService,
     bookService: BookService
-)(implicit val ThreadPool: ExecutionContextExecutor)
+)(implicit val ThreadPool: ExecutionContext)
     extends FilterService {
   override def filterAuthors(request: FilterAuthorsRequest): Future[FilterAuthorsResponse] = {
     authorService.listAuthors.map { listAuthorsResponse =>

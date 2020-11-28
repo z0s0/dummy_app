@@ -15,15 +15,14 @@ import ru.otus.sc.book.model.{
   DeleteBookResponse,
   GetBookRequest,
   GetBookResponse,
-  ListBooksResponse,
   UpdateBookRequest,
   UpdateBookResponse
 }
 import ru.otus.sc.author.model.Genre
 import ru.otus.sc.book.dao.BookDao
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
-import ru.otus.sc.ThreadPool.CustomThreadPool
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures {
 
@@ -120,7 +119,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
       val dao = mock[BookDao]
       val srv = new BookServiceImpl(dao)
 
-      val request = DeleteBookRequest(book1.id)
+      val request = DeleteBookRequest(book1.id.get)
 
       (dao.deleteBook _).expects(book1.id.get).returns(Future.successful(Some(book1)))
       srv.deleteBook(request).futureValue shouldBe DeleteBookResponse.Deleted(book1)
@@ -130,7 +129,7 @@ class BookServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures
       val dao = mock[BookDao]
       val srv = new BookServiceImpl(dao)
 
-      val request = DeleteBookRequest(book1.id)
+      val request = DeleteBookRequest(book1.id.get)
 
       (dao.deleteBook _).expects(book1.id.get).returns(Future.successful(None))
       srv.deleteBook(request).futureValue shouldBe (DeleteBookResponse.NotFound)

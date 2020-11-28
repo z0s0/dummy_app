@@ -1,7 +1,7 @@
 package ru.otus.sc.author.service.impl
 
 import java.util.UUID
-import ru.otus.sc.ThreadPool.CustomThreadPool
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import org.scalatest.matchers.should.Matchers._
 import org.scalamock.scalatest.MockFactory
@@ -22,7 +22,7 @@ import ru.otus.sc.author.model.{
   UpdateAuthorResponse
 }
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.Future
 
 class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutures {
 
@@ -71,18 +71,18 @@ class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutur
       val dao = mock[AuthorDao]
       val srv = new AuthorServiceImpl(dao)
 
-      (dao.listAuthors _).expects().returns(Future.successful(Seq[Author]()))
+      (dao.listAuthors _).expects().returns(Future.successful(Vector[Author]()))
 
-      srv.listAuthors.futureValue shouldBe ListAuthorsResponse(Seq[Author]())
+      srv.listAuthors.futureValue shouldBe ListAuthorsResponse(Vector[Author]())
     }
 
     "when db is not empty returns list of authors" - {
       val dao = mock[AuthorDao]
       val srv = new AuthorServiceImpl(dao)
 
-      (dao.listAuthors _).expects().returns(Future.successful(Seq[Author](author1)))
+      (dao.listAuthors _).expects().returns(Future.successful(Vector[Author](author1)))
 
-      srv.listAuthors.futureValue shouldBe ListAuthorsResponse(Seq[Author](author1))
+      srv.listAuthors.futureValue shouldBe ListAuthorsResponse(Vector[Author](author1))
     }
   }
 
@@ -103,29 +103,14 @@ class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutur
       (dao.updateAuthor _).expects(author1).returns(Future.successful(None))
       srv.updateAuthor(request).futureValue shouldBe UpdateAuthorResponse.Invalid
     }
-    "when id is not provided" - {
-      val dao             = mock[AuthorDao]
-      val srv             = new AuthorServiceImpl(dao)
-      val authorWithoutID = author1.copy(id = None)
-      val request         = UpdateAuthorRequest(authorWithoutID)
-
-      srv.updateAuthor(request).futureValue shouldBe UpdateAuthorResponse.CannotUpdateWithoutID
-    }
   }
 
   "deleteAuthor" - {
-    "when id is provided but author is unknown" - {
-      val dao     = mock[AuthorDao]
-      val srv     = new AuthorServiceImpl(dao)
-      val request = DeleteAuthorRequest(None)
-
-      srv.deleteAuthor(request).futureValue shouldBe DeleteAuthorResponse.CannotDeleteWithoutID
-    }
     "when author is unknown" - {
       val id      = UUID.randomUUID()
       val dao     = mock[AuthorDao]
       val srv     = new AuthorServiceImpl(dao)
-      val request = DeleteAuthorRequest(Some(id))
+      val request = DeleteAuthorRequest(id)
 
       (dao.deleteAuthor _).expects(id).returns(Future.successful(None))
 
@@ -135,7 +120,7 @@ class AuthorServiceImplTest extends AnyFreeSpec with MockFactory with ScalaFutur
       val id      = UUID.randomUUID()
       val dao     = mock[AuthorDao]
       val srv     = new AuthorServiceImpl(dao)
-      val request = DeleteAuthorRequest(Some(id))
+      val request = DeleteAuthorRequest(id)
 
       (dao.deleteAuthor _).expects(id).returns(Future.successful(Some(author1)))
       srv.deleteAuthor(request).futureValue shouldBe DeleteAuthorResponse.Deleted(author1)
