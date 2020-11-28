@@ -36,10 +36,10 @@ class BookRouteTest
     with ScalaFutures
     with ScalaCheckDrivenPropertyChecks {
 
-  import scala.concurrent.ExecutionContext.global
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   val srv: BookService = mock[BookService]
-  val router           = new BookRouter(srv, global)
+  val router           = new BookRouter(srv)
 
   "GET /books" in {
     val books = Vector(genBook.sample.get, genBook.sample.get)

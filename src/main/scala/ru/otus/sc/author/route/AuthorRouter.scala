@@ -15,12 +15,11 @@ import ru.otus.sc.author.model.{
 }
 import sttp.tapir.server.akkahttp._
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.ExecutionContext
 
 class AuthorRouter(
-    authorService: AuthorService,
-    implicit val threadPool: ExecutionContextExecutor
-) {
+    authorService: AuthorService
+)(implicit val threadPool: ExecutionContext) {
   def route: Route = getAuthor ~ createAuthor ~ updateAuthor ~ deleteAuthor ~ listAuthors
 
   def getAuthor: Route =

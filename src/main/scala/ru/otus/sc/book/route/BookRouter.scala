@@ -15,9 +15,9 @@ import ru.otus.sc.book.model.{
 }
 import sttp.tapir.server.akkahttp._
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.ExecutionContext
 
-class BookRouter(bookService: BookService, implicit val ex: ExecutionContextExecutor) {
+class BookRouter(bookService: BookService)(implicit val threadPool: ExecutionContext) {
   def route: Route = getBook ~ listBooks ~ createBook ~ deleteBook ~ updateBook
 
   private def getBook: Route =
