@@ -11,4 +11,4 @@ case object GetAuthorResponse {
 
 case class GetAuthorRequest(id: UUID)
 
-case class ListAuthorsResponse(authors: Seq[Author])
+case class ListAuthorsResponse(authors: Vector[Author])

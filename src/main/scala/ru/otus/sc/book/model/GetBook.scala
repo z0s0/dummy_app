@@ -16,4 +16,4 @@ case object GetBookResponse {
 
 }
 
-case class ListBooksResponse(books: Seq[Book])
+case class ListBooksResponse(books: Vector[Book])

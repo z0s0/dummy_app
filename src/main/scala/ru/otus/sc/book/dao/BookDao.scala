@@ -6,7 +6,7 @@ import scala.concurrent.Future
 import ru.otus.sc.book.model.Book
 
 trait BookDao {
-  def listBooks: Future[Seq[Book]]
+  def listBooks: Future[Vector[Book]]
   def getBook(id: UUID): Future[Option[Book]]
   def createBook(book: Book): Future[Option[Book]]
   def updateBook(book: Book): Future[Option[Book]]
