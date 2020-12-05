@@ -3,7 +3,7 @@ package ru.otus.sc.book.json
 import play.api.libs.json.{Json, OFormat}
 import ru.otus.sc.author.model.Genre
 import ru.otus.sc.book.model.Book
-import ru.otus.sc.json.AdtProtocol
+import ru.otus.sc.serialization.json.AdtProtocol
 
 trait BookJsonProtocol extends AdtProtocol {
   implicit lazy val bookFormat: OFormat[Book] = Json.format

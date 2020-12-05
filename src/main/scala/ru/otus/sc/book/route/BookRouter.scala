@@ -2,6 +2,7 @@ package ru.otus.sc.book.route
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
+import ru.otus.sc.auth.AuthService
 import ru.otus.sc.book.service.BookService
 import ru.otus.sc.book.model.{
   CreateBookRequest,
@@ -17,7 +18,9 @@ import sttp.tapir.server.akkahttp._
 
 import scala.concurrent.ExecutionContext
 
-class BookRouter(bookService: BookService)(implicit val threadPool: ExecutionContext) {
+class BookRouter(bookService: BookService, authService: AuthService)(implicit
+    val threadPool: ExecutionContext
+) {
   def route: Route = getBook ~ listBooks ~ createBook ~ deleteBook ~ updateBook
 
   private def getBook: Route =

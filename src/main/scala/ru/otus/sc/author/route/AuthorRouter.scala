@@ -2,6 +2,7 @@ package ru.otus.sc.author.route
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
+import ru.otus.sc.auth.AuthService
 import ru.otus.sc.author.service.AuthorService
 import ru.otus.sc.author.model.{
   CreateAuthorRequest,
@@ -15,10 +16,11 @@ import ru.otus.sc.author.model.{
 }
 import sttp.tapir.server.akkahttp._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class AuthorRouter(
-    authorService: AuthorService
+    authorService: AuthorService,
+    authService: AuthService
 )(implicit val threadPool: ExecutionContext) {
   def route: Route = getAuthor ~ createAuthor ~ updateAuthor ~ deleteAuthor ~ listAuthors
 
@@ -40,14 +42,35 @@ class AuthorRouter(
 
   private def createAuthor: Route =
     AuthorRoutesDocs.createAuthor
-      .toRoute(author => {
-        authorService.createAuthor(CreateAuthorRequest(author)).map {
-          case CreateAuthorResponse.Created(author) =>
-            println(author)
-            Right(author)
-          case CreateAuthorResponse.Invalid => Left()
-        }
-      })
+      .toRoute {
+        case (token, author) =>
+          token match {
+            case Some(value) =>
+              val usernamePassword = value.split(" ")
+              if (usernamePassword.length == 2) {
+                val username = usernamePassword(0)
+                val password = usernamePassword(1)
+
+                for {
+                  authenticated <- authService.is_authenticated(username, password)
+                  res <-
+                    if (authenticated) {
+                      authorService.createAuthor(CreateAuthorRequest(author)).map {
+                        case CreateAuthorResponse.Created(author) => Right(author)
+                        case CreateAuthorResponse.Invalid         => Left()
+                      }
+                    } else {
+                      Future.successful(Left())
+                    }
+                } yield res
+              } else {
+                Future.successful(Left())
+              }
+
+            case None =>
+              Future.successful(Left())
+          }
+      }
 
   private def updateAuthor: Route =
     AuthorRoutesDocs.updateAuthor

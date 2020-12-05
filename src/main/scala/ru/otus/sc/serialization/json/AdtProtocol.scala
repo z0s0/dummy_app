@@ -1,4 +1,4 @@
-package ru.otus.sc.json
+package ru.otus.sc.serialization.json
 
 import play.api.libs.json._
 
