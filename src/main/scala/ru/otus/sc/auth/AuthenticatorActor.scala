@@ -4,10 +4,11 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
+import ru.otus.sc.serialization.cbor.CborSerializable
 
 object AuthenticatorActor {
-  sealed trait Command
-  case object Stop extends Command
+  sealed trait Command extends CborSerializable
+  case object Stop     extends Command
   case class Authenticate(username: String, password: String, replyTo: ActorRef[Boolean])
       extends Command
 
