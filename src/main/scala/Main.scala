@@ -1,5 +1,4 @@
 import cats.implicits._
-import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -9,21 +8,16 @@ import ru.otus.sc.author.route.AuthorRouter
 import ru.otus.sc.book.dao.impl.BookDaoDoobieImpl
 import ru.otus.sc.book.route.BookRouter
 import ru.otus.sc.book.service.impl.BookServiceImpl
-import cats.effect.{Blocker, ContextShift, IO, Resource}
+import cats.effect.{Blocker, ContextShift, IO}
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
-import ru.otus.sc.Config
-import ru.otus.sc.db.Migrations
 import ru.otus.sc.author.route.AuthorRoutesDocs
 import ru.otus.sc.book.route.BookRoutesDocs
-import akka.actor.typed.{ActorSystem, Behavior}
-import akka.cluster.sharding.typed.scaladsl.ClusterSharding
-import akka.cluster.typed.Cluster
-import akka.management.scaladsl.AkkaManagement
+import akka.actor.typed.ActorSystem
 import ru.otus.sc.auth.AuthService
 
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.io.StdIn
 import sttp.tapir.openapi.circe.yaml._
 import sttp.tapir.docs.openapi._
@@ -57,8 +51,6 @@ object Main {
 
     App.start()
 
-    val config = Config.default
-
     if (App.hasRole("bookshelf")) {
       val transactor =
         for {
@@ -66,9 +58,9 @@ object Main {
           be <- Blocker[IO]
           xa <- HikariTransactor.newHikariTransactor[IO](
             "org.postgresql.Driver",
-            config.dbUrl,
-            config.dbUser,
-            config.dbPassword,
+            "pidor",
+            "pidor",
+            "pidor",
             ce,
             be
           )
@@ -81,8 +73,6 @@ object Main {
           val authenticator                           = new AuthService
 
           val binding = Http().newServerAt("localhost", 5000).bind(createRoute(tr, authenticator))
-
-          new Migrations(config).applyMigrationsSync()
 
           binding.foreach(_ => println("http server started"))
 

@@ -5,7 +5,7 @@ import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
-import ru.otus.sc.Config
+import ru.otus.sc.DbConfig
 import ru.otus.sc.author.dao.{AuthorDao, AuthorDaoTest}
 import ru.otus.sc.db.Migrations
 
@@ -35,10 +35,10 @@ class AuthorDaoDoobieImplTest
   override def afterStart(): Unit = {
     super.afterStart()
     new Migrations(
-      Config(
-        dbPassword = container.password,
-        dbUser = container.username,
-        dbUrl = container.jdbcUrl
+      DbConfig(
+        password = container.password,
+        user = container.username,
+        url = container.jdbcUrl
       )
     ).applyMigrationsSync()
   }

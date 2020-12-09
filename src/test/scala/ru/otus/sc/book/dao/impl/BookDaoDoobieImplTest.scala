@@ -5,7 +5,7 @@ import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
-import ru.otus.sc.Config
+import ru.otus.sc.{Config, DbConfig}
 import ru.otus.sc.author.dao.AuthorDao
 import ru.otus.sc.author.dao.impl.AuthorDaoDoobieImpl
 import ru.otus.sc.book.dao.{BookDao, BookDaoTest}
@@ -18,11 +18,7 @@ class BookDaoDoobieImplTest extends BookDaoTest("BookDaoDoobie") with ForAllTest
     super.afterStart()
 
     new Migrations(
-      Config(
-        dbPassword = container.password,
-        dbUrl = container.jdbcUrl,
-        dbUser = container.username
-      )
+      DbConfig(password = container.password, url = container.jdbcUrl, user = container.username)
     ).applyMigrationsSync()
   }
 
