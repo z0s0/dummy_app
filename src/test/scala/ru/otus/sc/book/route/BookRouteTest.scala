@@ -23,6 +23,7 @@ import ru.otus.sc.book.model.{
   UpdateBookResponse
 }
 import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport._
+import ru.otus.sc.auth.AuthService
 import ru.otus.sc.book.json.BookJsonProtocol._
 import ru.otus.sc.book.service.BookService
 import ru.otus.sc.support.Generators.{arbitraryBook, genBook}
@@ -39,7 +40,9 @@ class BookRouteTest
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val srv: BookService = mock[BookService]
-  val router           = new BookRouter(srv)
+  val authSrv          = mock[AuthService]
+
+  val router = new BookRouter(srv, authSrv)
 
   "GET /books" in {
     val books = Vector(genBook.sample.get, genBook.sample.get)
