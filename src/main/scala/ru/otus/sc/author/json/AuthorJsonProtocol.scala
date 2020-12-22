@@ -2,7 +2,7 @@ package ru.otus.sc.author.json
 
 import play.api.libs.json.{Json, OFormat}
 import ru.otus.sc.author.model.{Author, Genre}
-import ru.otus.sc.json.AdtProtocol
+import ru.otus.sc.serialization.json.AdtProtocol
 
 trait AuthorJsonProtocol extends AdtProtocol {
   implicit lazy val authorFormat: OFormat[Author] = Json.format

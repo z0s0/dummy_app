@@ -31,7 +31,10 @@ object ProjectConfig {
 
     val testcontainers = "0.38.1"
 
-    val tapir = "0.17.0-M9"
+    val tapir               = "0.17.0-M9"
+    val managementVersion   = "1.0.8"
+    val akkaPersistenceJDBC = "3.5.2"
+
   }
 
   val testDependencies = Seq(
@@ -53,10 +56,29 @@ object ProjectConfig {
   )
 
   val akkaDependencies = Seq(
-    "com.typesafe.akka" %% "akka-stream"         % versions.akka,
-    "com.typesafe.akka" %% "akka-http"           % versions.`akka-http`,
-    "com.typesafe.akka" %% "akka-stream-testkit" % versions.akka,
-    "com.typesafe.akka" %% "akka-http-testkit"   % versions.`akka-http`
+    "com.typesafe.akka"             %% "akka-stream"                  % versions.akka,
+    "com.typesafe.akka"             %% "akka-http"                    % versions.`akka-http`,
+    "com.typesafe.akka"             %% "akka-stream-testkit"          % versions.akka,
+    "com.typesafe.akka"             %% "akka-http-testkit"            % versions.`akka-http`,
+    "com.typesafe.akka"             %% "akka-slf4j"                   % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-actor-typed"             % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-cluster-typed"           % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-cluster-sharding-typed"  % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-persistence-typed"       % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-serialization-jackson"   % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-persistence-query"       % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-cluster"                 % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-pki"                     % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-distributed-data"        % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-remote"                  % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-coordination"            % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-cluster-tools"           % versions.`akka`,
+    "com.lightbend.akka.management" %% "akka-management"              % versions.managementVersion,
+    "com.lightbend.akka.management" %% "akka-management-cluster-http" % versions.managementVersion,
+    "com.typesafe.akka"             %% "akka-persistence"             % versions.`akka`,
+    "com.github.dnvriend"           %% "akka-persistence-jdbc"        % versions.akkaPersistenceJDBC,
+    "com.typesafe.akka"             %% "akka-testkit"                 % versions.`akka`,
+    "com.typesafe.akka"             %% "akka-http-spray-json"         % versions.`akka-http`
   )
 
   val doobieDependencies = Seq(

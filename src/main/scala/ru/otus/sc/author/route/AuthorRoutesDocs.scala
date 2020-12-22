@@ -25,10 +25,11 @@ object AuthorRoutesDocs {
 
   val createAuthor = endpoint.post
     .in("authors")
+    .in(header[Option[String]]("authorization"))
     .in(jsonBody[Author])
     .out(jsonBody[Author])
+    .errorOut(statusCode(StatusCode.Unauthorized))
     .out(statusCode(StatusCode.Created))
-    .errorOut(statusCode(StatusCode.UnprocessableEntity))
 
   val updateAuthor = endpoint.put
     .in("authors" / path[UUID])

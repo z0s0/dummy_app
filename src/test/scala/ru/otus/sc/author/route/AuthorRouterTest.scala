@@ -3,6 +3,7 @@ package ru.otus.sc.author.route
 import java.util.UUID
 
 import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{MessageEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalamock.scalatest.MockFactory
@@ -11,6 +12,7 @@ import org.scalatest.matchers.should.Matchers._
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport._
 import org.scalatest.concurrent.ScalaFutures
+import ru.otus.sc.auth.AuthService
 import ru.otus.sc.author.model.{
   Author,
   CreateAuthorRequest,
@@ -26,7 +28,7 @@ import ru.otus.sc.author.model.{
 import ru.otus.sc.author.json.AuthorJsonProtocol._
 import ru.otus.sc.author.service.AuthorService
 import ru.otus.sc.support.Generators._
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.Future
 
 class AuthorRouterTest
@@ -38,7 +40,8 @@ class AuthorRouterTest
 
   val srv: AuthorService = mock[AuthorService]
 
-  val router: AuthorRouter = new AuthorRouter(srv)
+  val authSrv: AuthService = mock[AuthService]
+  val router: AuthorRouter = new AuthorRouter(srv, authSrv)
 
   "GET /authors" in {
     val authors = Vector(genAuthor.sample.get, genAuthor.sample.get)
@@ -86,7 +89,11 @@ class AuthorRouterTest
   "POST /authors" in {
     forAll { author: Author =>
       val authorEntity = Marshal(author).to[MessageEntity].futureValue
-      val request      = Post("/authors").withEntity(authorEntity)
+      val request = Post("/authors")
+        .withEntity(authorEntity)
+        .withHeaders(List(RawHeader("authorization", "serega serega")))
+
+      (authSrv.is_authenticated _).expects("serega", "serega").returns(Future.successful(true))
 
       (srv.createAuthor _)
         .expects(CreateAuthorRequest(author))
